@@ -1,0 +1,35 @@
+[package]
+name = "sundials-rs-sys"
+version = "0.1.0"
+edition = "2021"
+description = "Raw FFI bindings to the SUNDIALS C library (CVODE, CVODES, IDA, IDAS)"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/sn248/sundials-rs"
+readme = "README.md"
+keywords = ["sundials", "ode", "dae", "ffi", "bindings"]
+categories = ["science", "external-ffi-bindings", "mathematics"]
+rust-version = "1.70"
+links = "sundials"
+
+[build-dependencies]
+bindgen    = "0.69"
+pkg-config = "0.3"
+# Used only when the `vendored` feature is enabled:
+cmake  = { version = "0.1",  optional = true }
+ureq   = { version = "2",    optional = true }   # HTTPS download
+flate2 = { version = "1",    optional = true }   # .tar.gz decode
+tar    = { version = "0.4",  optional = true }   # .tar extraction
+
+[features]
+# Build SUNDIALS from source instead of linking to the system library.
+# Cargo downloads sundials-7.4.0.tar.gz from GitHub, builds a static
+# library with CMake, and links against it.  Requires cmake(1) to be
+# installed; no other system dependency is needed.
+#
+# Usage:
+#   cargo build --features sundials-rs-sys/vendored
+#
+# Or add to the workspace root Cargo.toml:
+#   [dependencies]
+#   sundials-rs-sys = { path = "...", features = ["vendored"] }
+vendored = ["dep:cmake", "dep:ureq", "dep:flate2", "dep:tar"]

@@ -1,0 +1,24 @@
+[package]
+name = "sundials-rs"
+version = "0.1.0"
+edition = "2021"
+description = "Safe Rust bindings to the SUNDIALS ODE/DAE solver library (CVODE, CVODES, IDA, IDAS)"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/sn248/sundials-rs"
+readme = "README.md"
+keywords = ["sundials", "ode", "dae", "solver", "numerical"]
+categories = ["science", "mathematics", "simulation"]
+rust-version = "1.70"
+
+[dependencies]
+# The version is used when publishing; the path is used inside this workspace.
+sundials-rs-sys = { version = "0.1.0", path = "../sundials-rs-sys" }
+thiserror = "1"
+
+[dev-dependencies]
+rayon = "1"
+
+[features]
+# Download and build SUNDIALS from source (requires cmake on PATH).
+# Delegates to sundials-rs-sys/vendored.
+vendored = ["sundials-rs-sys/vendored"]

@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "sundials-rs-sys",
+    "sundials-rs",
+]
+resolver = "2"
