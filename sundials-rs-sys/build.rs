@@ -17,8 +17,19 @@ fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=wrapper.h");
     println!("cargo:rerun-if-env-changed=SUNDIALS_DIR");
+    println!("cargo:rerun-if-env-changed=DOCS_RS");
 
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+
+    // docs.rs builds in a sandbox with no network access and no SUNDIALS
+    // install, so neither the system search nor the vendored download can
+    // work there.  rustdoc never links, so pre-generated bindings (from the
+    // vendored SUNDIALS 7.4.0 headers, x86_64-linux) are sufficient.
+    if env::var("DOCS_RS").is_ok() {
+        std::fs::copy("pregenerated/bindings.rs", out_dir.join("bindings.rs"))
+            .expect("failed to copy pregenerated bindings for docs.rs");
+        return;
+    }
 
     // ── 1. Locate (or build) SUNDIALS ─────────────────────────────────────────
     let (lib_dir, include_dir) = if let Ok(dir) = env::var("SUNDIALS_DIR") {
