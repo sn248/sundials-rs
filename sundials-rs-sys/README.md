@@ -9,7 +9,7 @@ Most users should depend on `sundials-rs` rather than this crate directly.
 
 ## Features
 
-- **`vendored`** — downloads SUNDIALS 7.4.0 from GitHub, builds a static
+- **`vendored`** — downloads SUNDIALS 7.8.0 from GitHub, builds a static
   library with CMake, and links against it. Requires `cmake` on `PATH`.
   No system SUNDIALS installation needed.
 

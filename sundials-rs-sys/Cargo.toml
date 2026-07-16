@@ -1,6 +1,6 @@
 [package]
 name = "sundials-rs-sys"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "Raw FFI bindings to the SUNDIALS C library (CVODE, CVODES, IDA, IDAS)"
 license = "MIT OR Apache-2.0"
@@ -22,7 +22,7 @@ tar    = { version = "0.4",  optional = true }   # .tar extraction
 
 [features]
 # Build SUNDIALS from source instead of linking to the system library.
-# Cargo downloads sundials-7.4.0.tar.gz from GitHub, builds a static
+# Cargo downloads sundials-7.8.0.tar.gz from GitHub, builds a static
 # library with CMake, and links against it.  Requires cmake(1) to be
 # installed; no other system dependency is needed.
 #

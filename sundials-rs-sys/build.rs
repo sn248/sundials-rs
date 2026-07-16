@@ -3,11 +3,11 @@ use std::path::{Path, PathBuf};
 
 // ── Version pinned here; bump to upgrade ──────────────────────────────────────
 #[cfg(feature = "vendored")]
-const SUNDIALS_VERSION: &str = "7.4.0";
+const SUNDIALS_VERSION: &str = "7.8.0";
 #[cfg(feature = "vendored")]
 const SUNDIALS_URL: &str = concat!(
     "https://github.com/LLNL/sundials/releases/download/",
-    "v7.4.0/sundials-7.4.0.tar.gz"
+    "v7.8.0/sundials-7.8.0.tar.gz"
 );
 
 fn main() {
@@ -24,7 +24,7 @@ fn main() {
     // docs.rs builds in a sandbox with no network access and no SUNDIALS
     // install, so neither the system search nor the vendored download can
     // work there.  rustdoc never links, so pre-generated bindings (from the
-    // vendored SUNDIALS 7.4.0 headers, x86_64-linux) are sufficient.
+    // vendored SUNDIALS 7.8.0 headers, x86_64-linux) are sufficient.
     if env::var("DOCS_RS").is_ok() {
         std::fs::copy("pregenerated/bindings.rs", out_dir.join("bindings.rs"))
             .expect("failed to copy pregenerated bindings for docs.rs");
@@ -172,21 +172,21 @@ fn build_vendored(out_dir: &Path) -> (PathBuf, PathBuf) {
             .define("BUILD_SHARED_LIBS", "OFF")
             .define("BUILD_STATIC_LIBS", "ON")
             // No MPI.
-            .define("ENABLE_MPI", "OFF")
+            .define("SUNDIALS_ENABLE_MPI", "OFF")
             // Skip tests and examples — they are slow to compile and not needed.
             .define("BUILD_TESTING",     "OFF")
-            .define("EXAMPLES_ENABLE_C", "OFF")
-            .define("EXAMPLES_ENABLE_CXX", "OFF")
+            .define("SUNDIALS_ENABLE_C_EXAMPLES", "OFF")
+            .define("SUNDIALS_ENABLE_CXX_EXAMPLES", "OFF")
             // Build only the solvers this crate exposes.
             // CVODES is a strict superset of CVODE; IDAS is a strict superset of
             // IDA.  Building both the plain and -S variants would create duplicate
             // symbols, so we build only the -S variants.
-            .define("BUILD_CVODE",   "OFF")
-            .define("BUILD_CVODES",  "ON")
-            .define("BUILD_IDA",     "OFF")
-            .define("BUILD_IDAS",    "ON")
-            .define("BUILD_ARKODE",  "OFF")
-            .define("BUILD_KINSOL",  "OFF")
+            .define("SUNDIALS_ENABLE_CVODE",   "OFF")
+            .define("SUNDIALS_ENABLE_CVODES",  "ON")
+            .define("SUNDIALS_ENABLE_IDA",     "OFF")
+            .define("SUNDIALS_ENABLE_IDAS",    "ON")
+            .define("SUNDIALS_ENABLE_ARKODE",  "OFF")
+            .define("SUNDIALS_ENABLE_KINSOL",  "OFF")
             .build(); // returns OUT_DIR — the install prefix
 
         eprintln!("[sundials-rs-sys] SUNDIALS build complete.");

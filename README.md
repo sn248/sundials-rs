@@ -61,7 +61,7 @@ If SUNDIALS is installed in a non-standard location:
 export SUNDIALS_DIR=/path/to/sundials/install
 ```
 
-**With the `vendored` feature** — only `cmake` is required; SUNDIALS 7.4.0 is
+**With the `vendored` feature** — only `cmake` is required; SUNDIALS 7.8.0 is
 downloaded and built automatically.
 
 ## Examples

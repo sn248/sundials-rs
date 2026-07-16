@@ -1,6 +1,6 @@
 [package]
 name = "sundials-rs"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "Safe Rust bindings to the SUNDIALS ODE/DAE solver library (CVODE, CVODES, IDA, IDAS)"
 license = "MIT OR Apache-2.0"
@@ -12,7 +12,7 @@ rust-version = "1.70"
 
 [dependencies]
 # The version is used when publishing; the path is used inside this workspace.
-sundials-rs-sys = { version = "0.1.1", path = "../sundials-rs-sys" }
+sundials-rs-sys = { version = "0.1.2", path = "../sundials-rs-sys" }
 thiserror = "1"
 
 [dev-dependencies]

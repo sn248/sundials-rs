@@ -15,7 +15,7 @@ This is a Cargo workspace providing safe Rust bindings to the [SUNDIALS](https:/
 # Build (from workspace root)
 cargo build
 
-# Build with vendored SUNDIALS (downloads + compiles SUNDIALS 7.4.0 via CMake; no system lib needed)
+# Build with vendored SUNDIALS (downloads + compiles SUNDIALS 7.8.0 via CMake; no system lib needed)
 cargo build --features sundials-rs-sys/vendored
 
 # Run tests

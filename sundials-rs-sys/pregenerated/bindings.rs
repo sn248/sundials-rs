@@ -11,8 +11,8 @@ pub const SUN_FORTRAN_COMPILER: &[u8; 1] = b"\0";
 pub const SUN_FORTRAN_COMPILER_VERSION: &[u8; 1] = b"\0";
 pub const SUN_FORTRAN_COMPILER_FLAGS: &[u8; 1] = b"\0";
 pub const SUN_BUILD_TYPE: &[u8; 8] = b"Release\0";
-pub const SUN_JOB_ID: &[u8; 15] = b"20260705233935\0";
-pub const SUN_JOB_START_TIME: &[u8; 15] = b"20260705233935\0";
+pub const SUN_JOB_ID: &[u8; 15] = b"20260716085657\0";
+pub const SUN_JOB_START_TIME: &[u8; 15] = b"20260716085657\0";
 pub const SUN_TPL_LIST: &[u8; 1] = b"\0";
 pub const SUN_TPL_LIST_SIZE: &[u8; 1] = b"\0";
 pub const SUN_GINKGO_VERSION: &[u8; 1] = b"\0";
@@ -47,6 +47,7 @@ pub const SUNTRUE: u32 = 1;
 pub const SUN_COMM_NULL: u32 = 0;
 pub const SUN_NLS_CONTINUE: u32 = 901;
 pub const SUN_NLS_CONV_RECVR: u32 = 902;
+pub const SUN_NLS_SWITCH: u32 = 903;
 pub const CV_ADAMS: u32 = 1;
 pub const CV_BDF: u32 = 2;
 pub const CV_NORMAL: u32 = 1;
@@ -170,6 +171,7 @@ pub const IDA_NO_QUADSENS: i32 = -50;
 pub const IDA_QSRHS_FAIL: i32 = -51;
 pub const IDA_FIRST_QSRHS_ERR: i32 = -52;
 pub const IDA_REP_QSRHS_ERR: i32 = -53;
+pub const IDA_TOO_CLOSE: i32 = -60;
 pub const IDA_NO_ADJ: i32 = -101;
 pub const IDA_NO_FWD: i32 = -102;
 pub const IDA_NO_BCK: i32 = -103;
@@ -187,11 +189,6 @@ pub const SUNOutputFormat_SUN_OUTPUTFORMAT_CSV: SUNOutputFormat = 1;
 pub type SUNOutputFormat = ::std::os::raw::c_uint;
 pub type SUNErrCode = ::std::os::raw::c_int;
 pub type SUNContext = *mut SUNContext_;
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct SUNErrHandler_ {
-    _unused: [u8; 0],
-}
 pub type SUNErrHandler = *mut SUNErrHandler_;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -586,6 +583,7 @@ impl Default for _IO_FILE {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct SUNContext_ {
+    pub python: *mut ::std::os::raw::c_void,
     pub profiler: SUNProfiler,
     pub own_profiler: ::std::os::raw::c_int,
     pub logger: SUNLogger,
@@ -600,7 +598,7 @@ fn bindgen_test_layout_SUNContext_() {
     let ptr = UNINIT.as_ptr();
     assert_eq!(
         ::std::mem::size_of::<SUNContext_>(),
-        48usize,
+        56usize,
         concat!("Size of: ", stringify!(SUNContext_))
     );
     assert_eq!(
@@ -609,8 +607,18 @@ fn bindgen_test_layout_SUNContext_() {
         concat!("Alignment of ", stringify!(SUNContext_))
     );
     assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).profiler) as usize - ptr as usize },
+        unsafe { ::std::ptr::addr_of!((*ptr).python) as usize - ptr as usize },
         0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNContext_),
+            "::",
+            stringify!(python)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).profiler) as usize - ptr as usize },
+        8usize,
         concat!(
             "Offset of field: ",
             stringify!(SUNContext_),
@@ -620,7 +628,7 @@ fn bindgen_test_layout_SUNContext_() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).own_profiler) as usize - ptr as usize },
-        8usize,
+        16usize,
         concat!(
             "Offset of field: ",
             stringify!(SUNContext_),
@@ -630,7 +638,7 @@ fn bindgen_test_layout_SUNContext_() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).logger) as usize - ptr as usize },
-        16usize,
+        24usize,
         concat!(
             "Offset of field: ",
             stringify!(SUNContext_),
@@ -640,7 +648,7 @@ fn bindgen_test_layout_SUNContext_() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).own_logger) as usize - ptr as usize },
-        24usize,
+        32usize,
         concat!(
             "Offset of field: ",
             stringify!(SUNContext_),
@@ -650,7 +658,7 @@ fn bindgen_test_layout_SUNContext_() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).last_err) as usize - ptr as usize },
-        28usize,
+        36usize,
         concat!(
             "Offset of field: ",
             stringify!(SUNContext_),
@@ -660,7 +668,7 @@ fn bindgen_test_layout_SUNContext_() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).err_handler) as usize - ptr as usize },
-        32usize,
+        40usize,
         concat!(
             "Offset of field: ",
             stringify!(SUNContext_),
@@ -670,7 +678,7 @@ fn bindgen_test_layout_SUNContext_() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).comm) as usize - ptr as usize },
-        40usize,
+        48usize,
         concat!(
             "Offset of field: ",
             stringify!(SUNContext_),
@@ -725,40 +733,40 @@ extern "C" {
 extern "C" {
     pub fn SUNContext_Free(ctx: *mut SUNContext) -> SUNErrCode;
 }
-pub const SUN_ERR_MINIMUM: _bindgen_ty_1 = -10000;
-pub const SUN_ERR_ARG_CORRUPT: _bindgen_ty_1 = -9999;
-pub const SUN_ERR_ARG_INCOMPATIBLE: _bindgen_ty_1 = -9998;
-pub const SUN_ERR_ARG_OUTOFRANGE: _bindgen_ty_1 = -9997;
-pub const SUN_ERR_ARG_WRONGTYPE: _bindgen_ty_1 = -9996;
-pub const SUN_ERR_ARG_DIMSMISMATCH: _bindgen_ty_1 = -9995;
-pub const SUN_ERR_GENERIC: _bindgen_ty_1 = -9994;
-pub const SUN_ERR_CORRUPT: _bindgen_ty_1 = -9993;
-pub const SUN_ERR_OUTOFRANGE: _bindgen_ty_1 = -9992;
-pub const SUN_ERR_FILE_OPEN: _bindgen_ty_1 = -9991;
-pub const SUN_ERR_OP_FAIL: _bindgen_ty_1 = -9990;
-pub const SUN_ERR_MEM_FAIL: _bindgen_ty_1 = -9989;
-pub const SUN_ERR_MALLOC_FAIL: _bindgen_ty_1 = -9988;
-pub const SUN_ERR_EXT_FAIL: _bindgen_ty_1 = -9987;
-pub const SUN_ERR_DESTROY_FAIL: _bindgen_ty_1 = -9986;
-pub const SUN_ERR_NOT_IMPLEMENTED: _bindgen_ty_1 = -9985;
-pub const SUN_ERR_USER_FCN_FAIL: _bindgen_ty_1 = -9984;
-pub const SUN_ERR_DATANODE_NODENOTFOUND: _bindgen_ty_1 = -9983;
-pub const SUN_ERR_PROFILER_MAPFULL: _bindgen_ty_1 = -9982;
-pub const SUN_ERR_PROFILER_MAPGET: _bindgen_ty_1 = -9981;
-pub const SUN_ERR_PROFILER_MAPINSERT: _bindgen_ty_1 = -9980;
-pub const SUN_ERR_PROFILER_MAPKEYNOTFOUND: _bindgen_ty_1 = -9979;
-pub const SUN_ERR_PROFILER_MAPSORT: _bindgen_ty_1 = -9978;
-pub const SUN_ERR_ADJOINT_STEPPERFAILED: _bindgen_ty_1 = -9977;
-pub const SUN_ERR_ADJOINT_STEPPERINVALIDSTOP: _bindgen_ty_1 = -9976;
-pub const SUN_ERR_CHECKPOINT_NOT_FOUND: _bindgen_ty_1 = -9975;
-pub const SUN_ERR_CHECKPOINT_MISMATCH: _bindgen_ty_1 = -9974;
-pub const SUN_ERR_SUNCTX_CORRUPT: _bindgen_ty_1 = -9973;
-pub const SUN_ERR_MPI_FAIL: _bindgen_ty_1 = -9972;
-pub const SUN_ERR_UNREACHABLE: _bindgen_ty_1 = -9971;
-pub const SUN_ERR_UNKNOWN: _bindgen_ty_1 = -9970;
-pub const SUN_ERR_MAXIMUM: _bindgen_ty_1 = -1000;
-pub const SUN_SUCCESS: _bindgen_ty_1 = 0;
-pub type _bindgen_ty_1 = ::std::os::raw::c_int;
+pub const SUNErrCode__SUN_ERR_MINIMUM: SUNErrCode_ = -10000;
+pub const SUNErrCode__SUN_ERR_ARG_CORRUPT: SUNErrCode_ = -9999;
+pub const SUNErrCode__SUN_ERR_ARG_INCOMPATIBLE: SUNErrCode_ = -9998;
+pub const SUNErrCode__SUN_ERR_ARG_OUTOFRANGE: SUNErrCode_ = -9997;
+pub const SUNErrCode__SUN_ERR_ARG_WRONGTYPE: SUNErrCode_ = -9996;
+pub const SUNErrCode__SUN_ERR_ARG_DIMSMISMATCH: SUNErrCode_ = -9995;
+pub const SUNErrCode__SUN_ERR_GENERIC: SUNErrCode_ = -9994;
+pub const SUNErrCode__SUN_ERR_CORRUPT: SUNErrCode_ = -9993;
+pub const SUNErrCode__SUN_ERR_OUTOFRANGE: SUNErrCode_ = -9992;
+pub const SUNErrCode__SUN_ERR_FILE_OPEN: SUNErrCode_ = -9991;
+pub const SUNErrCode__SUN_ERR_OP_FAIL: SUNErrCode_ = -9990;
+pub const SUNErrCode__SUN_ERR_MEM_FAIL: SUNErrCode_ = -9989;
+pub const SUNErrCode__SUN_ERR_MALLOC_FAIL: SUNErrCode_ = -9988;
+pub const SUNErrCode__SUN_ERR_EXT_FAIL: SUNErrCode_ = -9987;
+pub const SUNErrCode__SUN_ERR_DESTROY_FAIL: SUNErrCode_ = -9986;
+pub const SUNErrCode__SUN_ERR_NOT_IMPLEMENTED: SUNErrCode_ = -9985;
+pub const SUNErrCode__SUN_ERR_USER_FCN_FAIL: SUNErrCode_ = -9984;
+pub const SUNErrCode__SUN_ERR_DATANODE_NODENOTFOUND: SUNErrCode_ = -9983;
+pub const SUNErrCode__SUN_ERR_PROFILER_MAPFULL: SUNErrCode_ = -9982;
+pub const SUNErrCode__SUN_ERR_PROFILER_MAPGET: SUNErrCode_ = -9981;
+pub const SUNErrCode__SUN_ERR_PROFILER_MAPINSERT: SUNErrCode_ = -9980;
+pub const SUNErrCode__SUN_ERR_PROFILER_MAPKEYNOTFOUND: SUNErrCode_ = -9979;
+pub const SUNErrCode__SUN_ERR_PROFILER_MAPSORT: SUNErrCode_ = -9978;
+pub const SUNErrCode__SUN_ERR_ADJOINT_STEPPERFAILED: SUNErrCode_ = -9977;
+pub const SUNErrCode__SUN_ERR_ADJOINT_STEPPERINVALIDSTOP: SUNErrCode_ = -9976;
+pub const SUNErrCode__SUN_ERR_CHECKPOINT_NOT_FOUND: SUNErrCode_ = -9975;
+pub const SUNErrCode__SUN_ERR_CHECKPOINT_MISMATCH: SUNErrCode_ = -9974;
+pub const SUNErrCode__SUN_ERR_SUNCTX_CORRUPT: SUNErrCode_ = -9973;
+pub const SUNErrCode__SUN_ERR_MPI_FAIL: SUNErrCode_ = -9972;
+pub const SUNErrCode__SUN_ERR_UNREACHABLE: SUNErrCode_ = -9971;
+pub const SUNErrCode__SUN_ERR_UNKNOWN: SUNErrCode_ = -9970;
+pub const SUNErrCode__SUN_ERR_MAXIMUM: SUNErrCode_ = -1000;
+pub const SUNErrCode__SUN_SUCCESS: SUNErrCode_ = 0;
+pub type SUNErrCode_ = ::std::os::raw::c_int;
 extern "C" {
     pub fn SUNLogErrHandlerFn(
         line: ::std::os::raw::c_int,
@@ -1679,7 +1687,7 @@ extern "C" {
     pub fn N_VGetDeviceArrayPointer(v: N_Vector) -> *mut sunrealtype;
 }
 extern "C" {
-    pub fn N_VSetArrayPointer(v_data: *mut sunrealtype, v: N_Vector);
+    pub fn N_VSetArrayPointer(v_data_1d: *mut sunrealtype, v: N_Vector);
 }
 extern "C" {
     pub fn N_VGetCommunicator(v: N_Vector) -> SUNComm;
@@ -1750,87 +1758,87 @@ extern "C" {
 extern "C" {
     pub fn N_VLinearCombination(
         nvec: ::std::os::raw::c_int,
-        c: *mut sunrealtype,
-        X: *mut N_Vector,
+        c_1d: *mut sunrealtype,
+        X_1d: *mut N_Vector,
         z: N_Vector,
     ) -> SUNErrCode;
 }
 extern "C" {
     pub fn N_VScaleAddMulti(
         nvec: ::std::os::raw::c_int,
-        a: *mut sunrealtype,
+        a_1d: *mut sunrealtype,
         x: N_Vector,
-        Y: *mut N_Vector,
-        Z: *mut N_Vector,
+        Y_1d: *mut N_Vector,
+        Z_1d: *mut N_Vector,
     ) -> SUNErrCode;
 }
 extern "C" {
     pub fn N_VDotProdMulti(
         nvec: ::std::os::raw::c_int,
         x: N_Vector,
-        Y: *mut N_Vector,
-        dotprods: *mut sunrealtype,
+        Y_1d: *mut N_Vector,
+        dotprods_1d: *mut sunrealtype,
     ) -> SUNErrCode;
 }
 extern "C" {
     pub fn N_VLinearSumVectorArray(
         nvec: ::std::os::raw::c_int,
         a: sunrealtype,
-        X: *mut N_Vector,
+        X_1d: *mut N_Vector,
         b: sunrealtype,
-        Y: *mut N_Vector,
-        Z: *mut N_Vector,
+        Y_1d: *mut N_Vector,
+        Z_1d: *mut N_Vector,
     ) -> SUNErrCode;
 }
 extern "C" {
     pub fn N_VScaleVectorArray(
         nvec: ::std::os::raw::c_int,
-        c: *mut sunrealtype,
-        X: *mut N_Vector,
-        Z: *mut N_Vector,
+        c_1d: *mut sunrealtype,
+        X_1d: *mut N_Vector,
+        Z_1d: *mut N_Vector,
     ) -> SUNErrCode;
 }
 extern "C" {
     pub fn N_VConstVectorArray(
         nvec: ::std::os::raw::c_int,
         c: sunrealtype,
-        Z: *mut N_Vector,
+        Z_1d: *mut N_Vector,
     ) -> SUNErrCode;
 }
 extern "C" {
     pub fn N_VWrmsNormVectorArray(
         nvec: ::std::os::raw::c_int,
-        X: *mut N_Vector,
-        W: *mut N_Vector,
-        nrm: *mut sunrealtype,
+        X_1d: *mut N_Vector,
+        W_1d: *mut N_Vector,
+        nrm_1d: *mut sunrealtype,
     ) -> SUNErrCode;
 }
 extern "C" {
     pub fn N_VWrmsNormMaskVectorArray(
         nvec: ::std::os::raw::c_int,
-        X: *mut N_Vector,
-        W: *mut N_Vector,
+        X_1d: *mut N_Vector,
+        W_1d: *mut N_Vector,
         id: N_Vector,
-        nrm: *mut sunrealtype,
+        nrm_1d: *mut sunrealtype,
     ) -> SUNErrCode;
 }
 extern "C" {
     pub fn N_VScaleAddMultiVectorArray(
         nvec: ::std::os::raw::c_int,
         nsum: ::std::os::raw::c_int,
-        a: *mut sunrealtype,
-        X: *mut N_Vector,
-        Y: *mut *mut N_Vector,
-        Z: *mut *mut N_Vector,
+        a_1d: *mut sunrealtype,
+        X_1d: *mut N_Vector,
+        Y_2d: *mut *mut N_Vector,
+        Z_2d: *mut *mut N_Vector,
     ) -> SUNErrCode;
 }
 extern "C" {
     pub fn N_VLinearCombinationVectorArray(
         nvec: ::std::os::raw::c_int,
         nsum: ::std::os::raw::c_int,
-        c: *mut sunrealtype,
-        X: *mut *mut N_Vector,
-        Z: *mut N_Vector,
+        c_1d: *mut sunrealtype,
+        X_2d: *mut *mut N_Vector,
+        Z_1d: *mut N_Vector,
     ) -> SUNErrCode;
 }
 extern "C" {
@@ -1864,15 +1872,15 @@ extern "C" {
     pub fn N_VDotProdMultiLocal(
         nvec: ::std::os::raw::c_int,
         x: N_Vector,
-        Y: *mut N_Vector,
-        dotprods: *mut sunrealtype,
+        Y_1d: *mut N_Vector,
+        dotprods_1d: *mut sunrealtype,
     ) -> SUNErrCode;
 }
 extern "C" {
     pub fn N_VDotProdMultiAllReduce(
         nvec_total: ::std::os::raw::c_int,
         x: N_Vector,
-        sum: *mut sunrealtype,
+        sum_1d: *mut sunrealtype,
     ) -> SUNErrCode;
 }
 extern "C" {
@@ -1894,15 +1902,17 @@ extern "C" {
     pub fn N_VCloneVectorArray(count: ::std::os::raw::c_int, w: N_Vector) -> *mut N_Vector;
 }
 extern "C" {
-    pub fn N_VDestroyVectorArray(vs: *mut N_Vector, count: ::std::os::raw::c_int);
+    pub fn N_VDestroyVectorArray(vs_1d: *mut N_Vector, count: ::std::os::raw::c_int);
 }
 extern "C" {
-    pub fn N_VGetVecAtIndexVectorArray(vs: *mut N_Vector, index: ::std::os::raw::c_int)
-        -> N_Vector;
+    pub fn N_VGetVecAtIndexVectorArray(
+        vs_1d: *mut N_Vector,
+        index: ::std::os::raw::c_int,
+    ) -> N_Vector;
 }
 extern "C" {
     pub fn N_VSetVecAtIndexVectorArray(
-        vs: *mut N_Vector,
+        vs_1d: *mut N_Vector,
         index: ::std::os::raw::c_int,
         w: N_Vector,
     );
@@ -1921,8 +1931,9 @@ pub const SUNMatrix_ID_SUNMATRIX_SPARSE: SUNMatrix_ID = 4;
 pub const SUNMatrix_ID_SUNMATRIX_SLUNRLOC: SUNMatrix_ID = 5;
 pub const SUNMatrix_ID_SUNMATRIX_CUSPARSE: SUNMatrix_ID = 6;
 pub const SUNMatrix_ID_SUNMATRIX_GINKGO: SUNMatrix_ID = 7;
-pub const SUNMatrix_ID_SUNMATRIX_KOKKOSDENSE: SUNMatrix_ID = 8;
-pub const SUNMatrix_ID_SUNMATRIX_CUSTOM: SUNMatrix_ID = 9;
+pub const SUNMatrix_ID_SUNMATRIX_GINKGOBATCH: SUNMatrix_ID = 8;
+pub const SUNMatrix_ID_SUNMATRIX_KOKKOSDENSE: SUNMatrix_ID = 9;
+pub const SUNMatrix_ID_SUNMATRIX_CUSTOM: SUNMatrix_ID = 10;
 pub type SUNMatrix_ID = ::std::os::raw::c_uint;
 pub type SUNMatrix_Ops = *mut _generic_SUNMatrix_Ops;
 pub type SUNMatrix = *mut _generic_SUNMatrix;
@@ -2189,14 +2200,14 @@ extern "C" {
         leniw: *mut ::std::os::raw::c_long,
     ) -> SUNErrCode;
 }
-pub const SUN_PREC_NONE: _bindgen_ty_2 = 0;
-pub const SUN_PREC_LEFT: _bindgen_ty_2 = 1;
-pub const SUN_PREC_RIGHT: _bindgen_ty_2 = 2;
-pub const SUN_PREC_BOTH: _bindgen_ty_2 = 3;
-pub type _bindgen_ty_2 = ::std::os::raw::c_uint;
-pub const SUN_MODIFIED_GS: _bindgen_ty_3 = 1;
-pub const SUN_CLASSICAL_GS: _bindgen_ty_3 = 2;
-pub type _bindgen_ty_3 = ::std::os::raw::c_uint;
+pub const SUNPrecType_SUN_PREC_NONE: SUNPrecType = 0;
+pub const SUNPrecType_SUN_PREC_LEFT: SUNPrecType = 1;
+pub const SUNPrecType_SUN_PREC_RIGHT: SUNPrecType = 2;
+pub const SUNPrecType_SUN_PREC_BOTH: SUNPrecType = 3;
+pub type SUNPrecType = ::std::os::raw::c_uint;
+pub const SUNGramSchmidtType_SUN_MODIFIED_GS: SUNGramSchmidtType = 1;
+pub const SUNGramSchmidtType_SUN_CLASSICAL_GS: SUNGramSchmidtType = 2;
+pub type SUNGramSchmidtType = ::std::os::raw::c_uint;
 pub type SUNATimesFn = ::std::option::Option<
     unsafe extern "C" fn(
         A_data: *mut ::std::os::raw::c_void,
@@ -2218,8 +2229,8 @@ pub type SUNPSolveFn = ::std::option::Option<
 >;
 pub type SUNQRAddFn = ::std::option::Option<
     unsafe extern "C" fn(
-        Q: *mut N_Vector,
-        R: *mut sunrealtype,
+        Q_1d: *mut N_Vector,
+        R_1d: *mut sunrealtype,
         f: N_Vector,
         m: ::std::os::raw::c_int,
         mMax: ::std::os::raw::c_int,
@@ -2228,8 +2239,8 @@ pub type SUNQRAddFn = ::std::option::Option<
 >;
 extern "C" {
     pub fn SUNModifiedGS(
-        v: *mut N_Vector,
-        h: *mut *mut sunrealtype,
+        v_1d: *mut N_Vector,
+        h_2d: *mut *mut sunrealtype,
         k: ::std::os::raw::c_int,
         p: ::std::os::raw::c_int,
         new_vk_norm: *mut sunrealtype,
@@ -2237,35 +2248,35 @@ extern "C" {
 }
 extern "C" {
     pub fn SUNClassicalGS(
-        v: *mut N_Vector,
-        h: *mut *mut sunrealtype,
+        v_1d: *mut N_Vector,
+        h_2d: *mut *mut sunrealtype,
         k: ::std::os::raw::c_int,
         p: ::std::os::raw::c_int,
         new_vk_norm: *mut sunrealtype,
-        stemp: *mut sunrealtype,
-        vtemp: *mut N_Vector,
+        stemp_1d: *mut sunrealtype,
+        vtemp_1d: *mut N_Vector,
     ) -> SUNErrCode;
 }
 extern "C" {
     pub fn SUNQRfact(
         n: ::std::os::raw::c_int,
-        h: *mut *mut sunrealtype,
-        q: *mut sunrealtype,
+        h_2d: *mut *mut sunrealtype,
+        q_1d: *mut sunrealtype,
         job: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn SUNQRsol(
         n: ::std::os::raw::c_int,
-        h: *mut *mut sunrealtype,
-        q: *mut sunrealtype,
-        b: *mut sunrealtype,
+        h_2d: *mut *mut sunrealtype,
+        q_1d: *mut sunrealtype,
+        b_1d: *mut sunrealtype,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn SUNQRAdd_MGS(
-        Q: *mut N_Vector,
-        R: *mut sunrealtype,
+        Q_1d: *mut N_Vector,
+        R_1d: *mut sunrealtype,
         df: N_Vector,
         m: ::std::os::raw::c_int,
         mMax: ::std::os::raw::c_int,
@@ -2274,8 +2285,8 @@ extern "C" {
 }
 extern "C" {
     pub fn SUNQRAdd_ICWY(
-        Q: *mut N_Vector,
-        R: *mut sunrealtype,
+        Q_1d: *mut N_Vector,
+        R_1d: *mut sunrealtype,
         df: N_Vector,
         m: ::std::os::raw::c_int,
         mMax: ::std::os::raw::c_int,
@@ -2284,8 +2295,8 @@ extern "C" {
 }
 extern "C" {
     pub fn SUNQRAdd_ICWY_SB(
-        Q: *mut N_Vector,
-        R: *mut sunrealtype,
+        Q_1d: *mut N_Vector,
+        R_1d: *mut sunrealtype,
         df: N_Vector,
         m: ::std::os::raw::c_int,
         mMax: ::std::os::raw::c_int,
@@ -2294,8 +2305,8 @@ extern "C" {
 }
 extern "C" {
     pub fn SUNQRAdd_CGS2(
-        Q: *mut N_Vector,
-        R: *mut sunrealtype,
+        Q_1d: *mut N_Vector,
+        R_1d: *mut sunrealtype,
         df: N_Vector,
         m: ::std::os::raw::c_int,
         mMax: ::std::os::raw::c_int,
@@ -2304,8 +2315,8 @@ extern "C" {
 }
 extern "C" {
     pub fn SUNQRAdd_DCGS2(
-        Q: *mut N_Vector,
-        R: *mut sunrealtype,
+        Q_1d: *mut N_Vector,
+        R_1d: *mut sunrealtype,
         df: N_Vector,
         m: ::std::os::raw::c_int,
         mMax: ::std::os::raw::c_int,
@@ -2314,8 +2325,8 @@ extern "C" {
 }
 extern "C" {
     pub fn SUNQRAdd_DCGS2_SB(
-        Q: *mut N_Vector,
-        R: *mut sunrealtype,
+        Q_1d: *mut N_Vector,
+        R_1d: *mut sunrealtype,
         df: N_Vector,
         m: ::std::os::raw::c_int,
         mMax: ::std::os::raw::c_int,
@@ -2343,8 +2354,9 @@ pub const SUNLinearSolver_ID_SUNLINEARSOLVER_CUSOLVERSP_BATCHQR: SUNLinearSolver
 pub const SUNLinearSolver_ID_SUNLINEARSOLVER_MAGMADENSE: SUNLinearSolver_ID = 13;
 pub const SUNLinearSolver_ID_SUNLINEARSOLVER_ONEMKLDENSE: SUNLinearSolver_ID = 14;
 pub const SUNLinearSolver_ID_SUNLINEARSOLVER_GINKGO: SUNLinearSolver_ID = 15;
-pub const SUNLinearSolver_ID_SUNLINEARSOLVER_KOKKOSDENSE: SUNLinearSolver_ID = 16;
-pub const SUNLinearSolver_ID_SUNLINEARSOLVER_CUSTOM: SUNLinearSolver_ID = 17;
+pub const SUNLinearSolver_ID_SUNLINEARSOLVER_GINKGOBATCH: SUNLinearSolver_ID = 16;
+pub const SUNLinearSolver_ID_SUNLINEARSOLVER_KOKKOSDENSE: SUNLinearSolver_ID = 17;
+pub const SUNLinearSolver_ID_SUNLINEARSOLVER_CUSTOM: SUNLinearSolver_ID = 18;
 pub type SUNLinearSolver_ID = ::std::os::raw::c_uint;
 pub type SUNLinearSolver_Ops = *mut _generic_SUNLinearSolver_Ops;
 pub type SUNLinearSolver = *mut _generic_SUNLinearSolver;
@@ -2372,6 +2384,15 @@ pub struct _generic_SUNLinearSolver_Ops {
     >,
     pub setscalingvectors: ::std::option::Option<
         unsafe extern "C" fn(arg1: SUNLinearSolver, arg2: N_Vector, arg3: N_Vector) -> SUNErrCode,
+    >,
+    pub setoptions: ::std::option::Option<
+        unsafe extern "C" fn(
+            arg1: SUNLinearSolver,
+            LSid: *const ::std::os::raw::c_char,
+            file_name: *const ::std::os::raw::c_char,
+            argc: ::std::os::raw::c_int,
+            argv: *mut *mut ::std::os::raw::c_char,
+        ) -> SUNErrCode,
     >,
     pub setzeroguess: ::std::option::Option<
         unsafe extern "C" fn(arg1: SUNLinearSolver, arg2: ::std::os::raw::c_int) -> SUNErrCode,
@@ -2412,7 +2433,7 @@ fn bindgen_test_layout__generic_SUNLinearSolver_Ops() {
     let ptr = UNINIT.as_ptr();
     assert_eq!(
         ::std::mem::size_of::<_generic_SUNLinearSolver_Ops>(),
-        120usize,
+        128usize,
         concat!("Size of: ", stringify!(_generic_SUNLinearSolver_Ops))
     );
     assert_eq!(
@@ -2471,8 +2492,18 @@ fn bindgen_test_layout__generic_SUNLinearSolver_Ops() {
         )
     );
     assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).setzeroguess) as usize - ptr as usize },
+        unsafe { ::std::ptr::addr_of!((*ptr).setoptions) as usize - ptr as usize },
         40usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_generic_SUNLinearSolver_Ops),
+            "::",
+            stringify!(setoptions)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).setzeroguess) as usize - ptr as usize },
+        48usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNLinearSolver_Ops),
@@ -2482,7 +2513,7 @@ fn bindgen_test_layout__generic_SUNLinearSolver_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).initialize) as usize - ptr as usize },
-        48usize,
+        56usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNLinearSolver_Ops),
@@ -2492,7 +2523,7 @@ fn bindgen_test_layout__generic_SUNLinearSolver_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).setup) as usize - ptr as usize },
-        56usize,
+        64usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNLinearSolver_Ops),
@@ -2502,7 +2533,7 @@ fn bindgen_test_layout__generic_SUNLinearSolver_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).solve) as usize - ptr as usize },
-        64usize,
+        72usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNLinearSolver_Ops),
@@ -2512,7 +2543,7 @@ fn bindgen_test_layout__generic_SUNLinearSolver_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).numiters) as usize - ptr as usize },
-        72usize,
+        80usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNLinearSolver_Ops),
@@ -2522,7 +2553,7 @@ fn bindgen_test_layout__generic_SUNLinearSolver_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).resnorm) as usize - ptr as usize },
-        80usize,
+        88usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNLinearSolver_Ops),
@@ -2532,7 +2563,7 @@ fn bindgen_test_layout__generic_SUNLinearSolver_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).lastflag) as usize - ptr as usize },
-        88usize,
+        96usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNLinearSolver_Ops),
@@ -2542,7 +2573,7 @@ fn bindgen_test_layout__generic_SUNLinearSolver_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).space) as usize - ptr as usize },
-        96usize,
+        104usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNLinearSolver_Ops),
@@ -2552,7 +2583,7 @@ fn bindgen_test_layout__generic_SUNLinearSolver_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).resid) as usize - ptr as usize },
-        104usize,
+        112usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNLinearSolver_Ops),
@@ -2562,7 +2593,7 @@ fn bindgen_test_layout__generic_SUNLinearSolver_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).free) as usize - ptr as usize },
-        112usize,
+        120usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNLinearSolver_Ops),
@@ -2575,6 +2606,7 @@ fn bindgen_test_layout__generic_SUNLinearSolver_Ops() {
 #[derive(Debug, Copy, Clone)]
 pub struct _generic_SUNLinearSolver {
     pub content: *mut ::std::os::raw::c_void,
+    pub python: *mut ::std::os::raw::c_void,
     pub ops: SUNLinearSolver_Ops,
     pub sunctx: SUNContext,
 }
@@ -2585,7 +2617,7 @@ fn bindgen_test_layout__generic_SUNLinearSolver() {
     let ptr = UNINIT.as_ptr();
     assert_eq!(
         ::std::mem::size_of::<_generic_SUNLinearSolver>(),
-        24usize,
+        32usize,
         concat!("Size of: ", stringify!(_generic_SUNLinearSolver))
     );
     assert_eq!(
@@ -2604,8 +2636,18 @@ fn bindgen_test_layout__generic_SUNLinearSolver() {
         )
     );
     assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).ops) as usize - ptr as usize },
+        unsafe { ::std::ptr::addr_of!((*ptr).python) as usize - ptr as usize },
         8usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_generic_SUNLinearSolver),
+            "::",
+            stringify!(python)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).ops) as usize - ptr as usize },
+        16usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNLinearSolver),
@@ -2615,7 +2657,7 @@ fn bindgen_test_layout__generic_SUNLinearSolver() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).sunctx) as usize - ptr as usize },
-        16usize,
+        24usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNLinearSolver),
@@ -2663,6 +2705,15 @@ extern "C" {
 extern "C" {
     pub fn SUNLinSolSetScalingVectors(S: SUNLinearSolver, s1: N_Vector, s2: N_Vector)
         -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNLinSolSetOptions(
+        S: SUNLinearSolver,
+        LSid: *const ::std::os::raw::c_char,
+        file_name: *const ::std::os::raw::c_char,
+        argc: ::std::os::raw::c_int,
+        argv: *mut *mut ::std::os::raw::c_char,
+    ) -> SUNErrCode;
 }
 extern "C" {
     pub fn SUNLinSolSetZeroGuess(S: SUNLinearSolver, onoff: ::std::os::raw::c_int) -> SUNErrCode;
@@ -2776,7 +2827,7 @@ extern "C" {
 extern "C" {
     pub fn N_VMake_Serial(
         vec_length: sunindextype,
-        v_data: *mut sunrealtype,
+        v_data_1d: *mut sunrealtype,
         sunctx: SUNContext,
     ) -> N_Vector;
 }
@@ -3892,6 +3943,15 @@ pub struct _generic_SUNAdaptController_Ops {
     >,
     pub destroy: ::std::option::Option<unsafe extern "C" fn(C: SUNAdaptController) -> SUNErrCode>,
     pub reset: ::std::option::Option<unsafe extern "C" fn(C: SUNAdaptController) -> SUNErrCode>,
+    pub setoptions: ::std::option::Option<
+        unsafe extern "C" fn(
+            C: SUNAdaptController,
+            Cid: *const ::std::os::raw::c_char,
+            file_name: *const ::std::os::raw::c_char,
+            argc: ::std::os::raw::c_int,
+            argv: *mut *mut ::std::os::raw::c_char,
+        ) -> SUNErrCode,
+    >,
     pub setdefaults:
         ::std::option::Option<unsafe extern "C" fn(C: SUNAdaptController) -> SUNErrCode>,
     pub write: ::std::option::Option<
@@ -3927,7 +3987,7 @@ fn bindgen_test_layout__generic_SUNAdaptController_Ops() {
     let ptr = UNINIT.as_ptr();
     assert_eq!(
         ::std::mem::size_of::<_generic_SUNAdaptController_Ops>(),
-        88usize,
+        96usize,
         concat!("Size of: ", stringify!(_generic_SUNAdaptController_Ops))
     );
     assert_eq!(
@@ -3986,8 +4046,18 @@ fn bindgen_test_layout__generic_SUNAdaptController_Ops() {
         )
     );
     assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).setdefaults) as usize - ptr as usize },
+        unsafe { ::std::ptr::addr_of!((*ptr).setoptions) as usize - ptr as usize },
         40usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_generic_SUNAdaptController_Ops),
+            "::",
+            stringify!(setoptions)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).setdefaults) as usize - ptr as usize },
+        48usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNAdaptController_Ops),
@@ -3997,7 +4067,7 @@ fn bindgen_test_layout__generic_SUNAdaptController_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).write) as usize - ptr as usize },
-        48usize,
+        56usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNAdaptController_Ops),
@@ -4007,7 +4077,7 @@ fn bindgen_test_layout__generic_SUNAdaptController_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).seterrorbias) as usize - ptr as usize },
-        56usize,
+        64usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNAdaptController_Ops),
@@ -4017,7 +4087,7 @@ fn bindgen_test_layout__generic_SUNAdaptController_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).updateh) as usize - ptr as usize },
-        64usize,
+        72usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNAdaptController_Ops),
@@ -4027,7 +4097,7 @@ fn bindgen_test_layout__generic_SUNAdaptController_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).updatemrihtol) as usize - ptr as usize },
-        72usize,
+        80usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNAdaptController_Ops),
@@ -4037,7 +4107,7 @@ fn bindgen_test_layout__generic_SUNAdaptController_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).space) as usize - ptr as usize },
-        80usize,
+        88usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNAdaptController_Ops),
@@ -4143,6 +4213,15 @@ extern "C" {
 }
 extern "C" {
     pub fn SUNAdaptController_Reset(C: SUNAdaptController) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNAdaptController_SetOptions(
+        C: SUNAdaptController,
+        Cid: *const ::std::os::raw::c_char,
+        file_name: *const ::std::os::raw::c_char,
+        argc: ::std::os::raw::c_int,
+        argv: *mut *mut ::std::os::raw::c_char,
+    ) -> SUNErrCode;
 }
 extern "C" {
     pub fn SUNAdaptController_SetDefaults(C: SUNAdaptController) -> SUNErrCode;
@@ -4382,7 +4461,7 @@ pub type SUNStepperSetForcingFn = ::std::option::Option<
         stepper: SUNStepper,
         tshift: sunrealtype,
         tscale: sunrealtype,
-        forcing: *mut N_Vector,
+        forcing_1d: *mut N_Vector,
         nforcing: ::std::os::raw::c_int,
     ) -> SUNErrCode,
 >;
@@ -4445,7 +4524,7 @@ extern "C" {
         stepper: SUNStepper,
         tshift: sunrealtype,
         tscale: sunrealtype,
-        forcing: *mut N_Vector,
+        forcing_1d: *mut N_Vector,
         nforcing: ::std::os::raw::c_int,
     ) -> SUNErrCode;
 }
@@ -4619,6 +4698,25 @@ pub const SUNLogLevel_SUN_LOGLEVEL_WARNING: SUNLogLevel = 2;
 pub const SUNLogLevel_SUN_LOGLEVEL_INFO: SUNLogLevel = 3;
 pub const SUNLogLevel_SUN_LOGLEVEL_DEBUG: SUNLogLevel = 4;
 pub type SUNLogLevel = ::std::os::raw::c_int;
+pub type SUNLoggerQueueMsgFn = ::std::option::Option<
+    unsafe extern "C" fn(
+        logger: SUNLogger,
+        lvl: SUNLogLevel,
+        prefix: *const ::std::os::raw::c_char,
+        rank: ::std::os::raw::c_int,
+        scope: *const ::std::os::raw::c_char,
+        label: *const ::std::os::raw::c_char,
+        payload: *const ::std::os::raw::c_char,
+        content: *mut ::std::os::raw::c_void,
+    ) -> SUNErrCode,
+>;
+pub type SUNLoggerFlushMsgFn = ::std::option::Option<
+    unsafe extern "C" fn(
+        logger: SUNLogger,
+        lvl: SUNLogLevel,
+        content: *mut ::std::os::raw::c_void,
+    ) -> SUNErrCode,
+>;
 extern "C" {
     pub fn SUNLogger_Create(
         comm: SUNComm,
@@ -4636,10 +4734,22 @@ extern "C" {
     ) -> SUNErrCode;
 }
 extern "C" {
+    pub fn SUNLogger_SetErrorFile(logger: SUNLogger, error_fp: *mut FILE) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNLogger_GetErrorFile(logger: SUNLogger, error_fp: *mut *mut FILE) -> SUNErrCode;
+}
+extern "C" {
     pub fn SUNLogger_SetWarningFilename(
         logger: SUNLogger,
         warning_filename: *const ::std::os::raw::c_char,
     ) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNLogger_SetWarningFile(logger: SUNLogger, warning_fp: *mut FILE) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNLogger_GetWarningFile(logger: SUNLogger, warning_fp: *mut *mut FILE) -> SUNErrCode;
 }
 extern "C" {
     pub fn SUNLogger_SetDebugFilename(
@@ -4648,9 +4758,29 @@ extern "C" {
     ) -> SUNErrCode;
 }
 extern "C" {
+    pub fn SUNLogger_SetDebugFile(logger: SUNLogger, debug_fp: *mut FILE) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNLogger_GetDebugFile(logger: SUNLogger, debug_fp: *mut *mut FILE) -> SUNErrCode;
+}
+extern "C" {
     pub fn SUNLogger_SetInfoFilename(
         logger: SUNLogger,
         info_filename: *const ::std::os::raw::c_char,
+    ) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNLogger_SetInfoFile(logger: SUNLogger, info_fp: *mut FILE) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNLogger_GetInfoFile(logger: SUNLogger, info_fp: *mut *mut FILE) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNLogger_SetQueueAndFlushMsgFns(
+        logger: SUNLogger,
+        queue_msg: SUNLoggerQueueMsgFn,
+        flush_msg: SUNLoggerFlushMsgFn,
+        lptr: *mut ::std::os::raw::c_void,
     ) -> SUNErrCode;
 }
 extern "C" {
@@ -4675,6 +4805,87 @@ extern "C" {
 extern "C" {
     pub fn SUNLogger_Destroy(logger: *mut SUNLogger) -> SUNErrCode;
 }
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct SUNErrHandler_ {
+    pub previous: SUNErrHandler,
+    pub call: SUNErrHandlerFn,
+    pub data: *mut ::std::os::raw::c_void,
+}
+#[test]
+fn bindgen_test_layout_SUNErrHandler_() {
+    const UNINIT: ::std::mem::MaybeUninit<SUNErrHandler_> = ::std::mem::MaybeUninit::uninit();
+    let ptr = UNINIT.as_ptr();
+    assert_eq!(
+        ::std::mem::size_of::<SUNErrHandler_>(),
+        24usize,
+        concat!("Size of: ", stringify!(SUNErrHandler_))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<SUNErrHandler_>(),
+        8usize,
+        concat!("Alignment of ", stringify!(SUNErrHandler_))
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).previous) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNErrHandler_),
+            "::",
+            stringify!(previous)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).call) as usize - ptr as usize },
+        8usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNErrHandler_),
+            "::",
+            stringify!(call)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).data) as usize - ptr as usize },
+        16usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNErrHandler_),
+            "::",
+            stringify!(data)
+        )
+    );
+}
+impl Default for SUNErrHandler_ {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+extern "C" {
+    pub fn SUNErrHandler_Create(
+        eh_fn: SUNErrHandlerFn,
+        eh_data: *mut ::std::os::raw::c_void,
+        eh_out: *mut SUNErrHandler,
+    ) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNErrHandler_Destroy(eh: *mut SUNErrHandler);
+}
+extern "C" {
+    pub fn SUNGlobalFallbackErrHandler(
+        line: ::std::os::raw::c_int,
+        func: *const ::std::os::raw::c_char,
+        file: *const ::std::os::raw::c_char,
+        msgfmt: *const ::std::os::raw::c_char,
+        code: SUNErrCode,
+        ...
+    );
+}
 extern "C" {
     pub fn SUNIpowerI(
         base: ::std::os::raw::c_int,
@@ -4696,6 +4907,436 @@ extern "C" {
 }
 extern "C" {
     pub fn SUNStrToReal(str_: *const ::std::os::raw::c_char) -> sunrealtype;
+}
+pub type SUNRhsFn = ::std::option::Option<
+    unsafe extern "C" fn(
+        t: sunrealtype,
+        y: N_Vector,
+        ydot: N_Vector,
+        user_data: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int,
+>;
+pub type SUNDomEigEstimator_Ops = *mut SUNDomEigEstimator_Ops_;
+pub type SUNDomEigEstimator = *mut SUNDomEigEstimator_;
+#[repr(C)]
+#[derive(Debug, Default, Copy, Clone)]
+pub struct SUNDomEigEstimator_Ops_ {
+    pub setatimes: ::std::option::Option<
+        unsafe extern "C" fn(
+            arg1: SUNDomEigEstimator,
+            arg2: *mut ::std::os::raw::c_void,
+            arg3: SUNATimesFn,
+        ) -> SUNErrCode,
+    >,
+    pub setrhs: ::std::option::Option<
+        unsafe extern "C" fn(
+            arg1: SUNDomEigEstimator,
+            arg2: *mut ::std::os::raw::c_void,
+            arg3: SUNRhsFn,
+        ) -> SUNErrCode,
+    >,
+    pub setrhslinearizationpoint: ::std::option::Option<
+        unsafe extern "C" fn(
+            arg1: SUNDomEigEstimator,
+            arg2: sunrealtype,
+            arg3: N_Vector,
+        ) -> SUNErrCode,
+    >,
+    pub setoptions: ::std::option::Option<
+        unsafe extern "C" fn(
+            DEE: SUNDomEigEstimator,
+            Did: *const ::std::os::raw::c_char,
+            file_name: *const ::std::os::raw::c_char,
+            argc: ::std::os::raw::c_int,
+            argv: *mut *mut ::std::os::raw::c_char,
+        ) -> SUNErrCode,
+    >,
+    pub setmaxiters: ::std::option::Option<
+        unsafe extern "C" fn(arg1: SUNDomEigEstimator, arg2: ::std::os::raw::c_long) -> SUNErrCode,
+    >,
+    pub setnumpreprocessiters: ::std::option::Option<
+        unsafe extern "C" fn(arg1: SUNDomEigEstimator, arg2: ::std::os::raw::c_int) -> SUNErrCode,
+    >,
+    pub setreltol: ::std::option::Option<
+        unsafe extern "C" fn(arg1: SUNDomEigEstimator, arg2: sunrealtype) -> SUNErrCode,
+    >,
+    pub setinitialguess: ::std::option::Option<
+        unsafe extern "C" fn(arg1: SUNDomEigEstimator, arg2: N_Vector) -> SUNErrCode,
+    >,
+    pub initialize:
+        ::std::option::Option<unsafe extern "C" fn(arg1: SUNDomEigEstimator) -> SUNErrCode>,
+    pub estimate: ::std::option::Option<
+        unsafe extern "C" fn(
+            arg1: SUNDomEigEstimator,
+            arg2: *mut sunrealtype,
+            arg3: *mut sunrealtype,
+        ) -> SUNErrCode,
+    >,
+    pub getres: ::std::option::Option<
+        unsafe extern "C" fn(arg1: SUNDomEigEstimator, arg2: *mut sunrealtype) -> SUNErrCode,
+    >,
+    pub getnumiters: ::std::option::Option<
+        unsafe extern "C" fn(
+            arg1: SUNDomEigEstimator,
+            arg2: *mut ::std::os::raw::c_long,
+        ) -> SUNErrCode,
+    >,
+    pub getnumrhsevals: ::std::option::Option<
+        unsafe extern "C" fn(
+            arg1: SUNDomEigEstimator,
+            arg2: *mut ::std::os::raw::c_long,
+        ) -> SUNErrCode,
+    >,
+    pub getnumatimescalls: ::std::option::Option<
+        unsafe extern "C" fn(
+            arg1: SUNDomEigEstimator,
+            arg2: *mut ::std::os::raw::c_long,
+        ) -> SUNErrCode,
+    >,
+    pub write: ::std::option::Option<
+        unsafe extern "C" fn(arg1: SUNDomEigEstimator, arg2: *mut FILE) -> SUNErrCode,
+    >,
+    pub destroy:
+        ::std::option::Option<unsafe extern "C" fn(arg1: *mut SUNDomEigEstimator) -> SUNErrCode>,
+}
+#[test]
+fn bindgen_test_layout_SUNDomEigEstimator_Ops_() {
+    const UNINIT: ::std::mem::MaybeUninit<SUNDomEigEstimator_Ops_> =
+        ::std::mem::MaybeUninit::uninit();
+    let ptr = UNINIT.as_ptr();
+    assert_eq!(
+        ::std::mem::size_of::<SUNDomEigEstimator_Ops_>(),
+        128usize,
+        concat!("Size of: ", stringify!(SUNDomEigEstimator_Ops_))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<SUNDomEigEstimator_Ops_>(),
+        8usize,
+        concat!("Alignment of ", stringify!(SUNDomEigEstimator_Ops_))
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).setatimes) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_Ops_),
+            "::",
+            stringify!(setatimes)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).setrhs) as usize - ptr as usize },
+        8usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_Ops_),
+            "::",
+            stringify!(setrhs)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).setrhslinearizationpoint) as usize - ptr as usize },
+        16usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_Ops_),
+            "::",
+            stringify!(setrhslinearizationpoint)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).setoptions) as usize - ptr as usize },
+        24usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_Ops_),
+            "::",
+            stringify!(setoptions)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).setmaxiters) as usize - ptr as usize },
+        32usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_Ops_),
+            "::",
+            stringify!(setmaxiters)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).setnumpreprocessiters) as usize - ptr as usize },
+        40usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_Ops_),
+            "::",
+            stringify!(setnumpreprocessiters)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).setreltol) as usize - ptr as usize },
+        48usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_Ops_),
+            "::",
+            stringify!(setreltol)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).setinitialguess) as usize - ptr as usize },
+        56usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_Ops_),
+            "::",
+            stringify!(setinitialguess)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).initialize) as usize - ptr as usize },
+        64usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_Ops_),
+            "::",
+            stringify!(initialize)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).estimate) as usize - ptr as usize },
+        72usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_Ops_),
+            "::",
+            stringify!(estimate)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).getres) as usize - ptr as usize },
+        80usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_Ops_),
+            "::",
+            stringify!(getres)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).getnumiters) as usize - ptr as usize },
+        88usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_Ops_),
+            "::",
+            stringify!(getnumiters)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).getnumrhsevals) as usize - ptr as usize },
+        96usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_Ops_),
+            "::",
+            stringify!(getnumrhsevals)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).getnumatimescalls) as usize - ptr as usize },
+        104usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_Ops_),
+            "::",
+            stringify!(getnumatimescalls)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).write) as usize - ptr as usize },
+        112usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_Ops_),
+            "::",
+            stringify!(write)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).destroy) as usize - ptr as usize },
+        120usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_Ops_),
+            "::",
+            stringify!(destroy)
+        )
+    );
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct SUNDomEigEstimator_ {
+    pub content: *mut ::std::os::raw::c_void,
+    pub python: *mut ::std::os::raw::c_void,
+    pub ops: SUNDomEigEstimator_Ops,
+    pub sunctx: SUNContext,
+}
+#[test]
+fn bindgen_test_layout_SUNDomEigEstimator_() {
+    const UNINIT: ::std::mem::MaybeUninit<SUNDomEigEstimator_> = ::std::mem::MaybeUninit::uninit();
+    let ptr = UNINIT.as_ptr();
+    assert_eq!(
+        ::std::mem::size_of::<SUNDomEigEstimator_>(),
+        32usize,
+        concat!("Size of: ", stringify!(SUNDomEigEstimator_))
+    );
+    assert_eq!(
+        ::std::mem::align_of::<SUNDomEigEstimator_>(),
+        8usize,
+        concat!("Alignment of ", stringify!(SUNDomEigEstimator_))
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).content) as usize - ptr as usize },
+        0usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_),
+            "::",
+            stringify!(content)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).python) as usize - ptr as usize },
+        8usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_),
+            "::",
+            stringify!(python)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).ops) as usize - ptr as usize },
+        16usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_),
+            "::",
+            stringify!(ops)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).sunctx) as usize - ptr as usize },
+        24usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SUNDomEigEstimator_),
+            "::",
+            stringify!(sunctx)
+        )
+    );
+}
+impl Default for SUNDomEigEstimator_ {
+    fn default() -> Self {
+        let mut s = ::std::mem::MaybeUninit::<Self>::uninit();
+        unsafe {
+            ::std::ptr::write_bytes(s.as_mut_ptr(), 0, 1);
+            s.assume_init()
+        }
+    }
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_NewEmpty(sunctx: SUNContext) -> SUNDomEigEstimator;
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_FreeEmpty(DEE: SUNDomEigEstimator);
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_SetATimes(
+        DEE: SUNDomEigEstimator,
+        A_data: *mut ::std::os::raw::c_void,
+        ATimes: SUNATimesFn,
+    ) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_SetRhs(
+        DEE: SUNDomEigEstimator,
+        rhs_data: *mut ::std::os::raw::c_void,
+        RHSfn: SUNRhsFn,
+    ) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_SetRhsLinearizationPoint(
+        DEE: SUNDomEigEstimator,
+        t: sunrealtype,
+        v: N_Vector,
+    ) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_SetOptions(
+        DEE: SUNDomEigEstimator,
+        Did: *const ::std::os::raw::c_char,
+        file_name: *const ::std::os::raw::c_char,
+        argc: ::std::os::raw::c_int,
+        argv: *mut *mut ::std::os::raw::c_char,
+    ) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_SetMaxIters(
+        DEE: SUNDomEigEstimator,
+        max_iters: ::std::os::raw::c_long,
+    ) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_SetNumPreprocessIters(
+        DEE: SUNDomEigEstimator,
+        num_iters: ::std::os::raw::c_int,
+    ) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_SetRelTol(DEE: SUNDomEigEstimator, tol: sunrealtype) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_SetInitialGuess(DEE: SUNDomEigEstimator, q: N_Vector) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_Initialize(DEE: SUNDomEigEstimator) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_Estimate(
+        DEE: SUNDomEigEstimator,
+        lambdaR: *mut sunrealtype,
+        lambdaI: *mut sunrealtype,
+    ) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_GetRes(DEE: SUNDomEigEstimator, res: *mut sunrealtype) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_GetNumIters(
+        DEE: SUNDomEigEstimator,
+        num_iters: *mut ::std::os::raw::c_long,
+    ) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_GetNumRhsEvals(
+        DEE: SUNDomEigEstimator,
+        num_rhs_evals: *mut ::std::os::raw::c_long,
+    ) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_GetNumATimesCalls(
+        DEE: SUNDomEigEstimator,
+        num_ATimes: *mut ::std::os::raw::c_long,
+    ) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_Write(DEE: SUNDomEigEstimator, outfile: *mut FILE) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNDomEigEstimator_Destroy(DEEptr: *mut SUNDomEigEstimator) -> SUNErrCode;
 }
 pub const SUNMemoryType_SUNMEMTYPE_HOST: SUNMemoryType = 0;
 pub const SUNMemoryType_SUNMEMTYPE_PINNED: SUNMemoryType = 1;
@@ -5133,8 +5774,23 @@ pub type SUNNonlinSolConvTestFn = ::std::option::Option<
         mem: *mut ::std::os::raw::c_void,
     ) -> ::std::os::raw::c_int,
 >;
+pub type SUNNonlinSolNormFn = ::std::option::Option<
+    unsafe extern "C" fn(
+        del: N_Vector,
+        w: N_Vector,
+        delnrm: *mut sunrealtype,
+        mem: *mut ::std::os::raw::c_void,
+    ) -> SUNErrCode,
+>;
+pub type SUNNonlinSolGetUpdateNormFn = ::std::option::Option<
+    unsafe extern "C" fn(delnrm: *mut sunrealtype, mem: *mut ::std::os::raw::c_void) -> SUNErrCode,
+>;
+pub type SUNNonlinSolGetConvRateFn = ::std::option::Option<
+    unsafe extern "C" fn(crate_: *mut sunrealtype, mem: *mut ::std::os::raw::c_void) -> SUNErrCode,
+>;
 pub const SUNNonlinearSolver_Type_SUNNONLINEARSOLVER_ROOTFIND: SUNNonlinearSolver_Type = 0;
 pub const SUNNonlinearSolver_Type_SUNNONLINEARSOLVER_FIXEDPOINT: SUNNonlinearSolver_Type = 1;
+pub const SUNNonlinearSolver_Type_SUNNONLINEARSOLVER_HYBRID: SUNNonlinearSolver_Type = 2;
 pub type SUNNonlinearSolver_Type = ::std::os::raw::c_uint;
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone)]
@@ -5166,6 +5822,13 @@ pub struct _generic_SUNNonlinearSolver_Ops {
     pub setsysfn: ::std::option::Option<
         unsafe extern "C" fn(arg1: SUNNonlinearSolver, arg2: SUNNonlinSolSysFn) -> SUNErrCode,
     >,
+    pub setsysfns: ::std::option::Option<
+        unsafe extern "C" fn(
+            arg1: SUNNonlinearSolver,
+            arg2: SUNNonlinSolSysFn,
+            arg3: SUNNonlinSolSysFn,
+        ) -> SUNErrCode,
+    >,
     pub setlsetupfn: ::std::option::Option<
         unsafe extern "C" fn(arg1: SUNNonlinearSolver, arg2: SUNNonlinSolLSetupFn) -> SUNErrCode,
     >,
@@ -5177,6 +5840,36 @@ pub struct _generic_SUNNonlinearSolver_Ops {
             arg1: SUNNonlinearSolver,
             arg2: SUNNonlinSolConvTestFn,
             arg3: *mut ::std::os::raw::c_void,
+        ) -> SUNErrCode,
+    >,
+    pub setnormfn: ::std::option::Option<
+        unsafe extern "C" fn(
+            arg1: SUNNonlinearSolver,
+            arg2: SUNNonlinSolNormFn,
+            arg3: *mut ::std::os::raw::c_void,
+        ) -> SUNErrCode,
+    >,
+    pub setgetupdatenormfn: ::std::option::Option<
+        unsafe extern "C" fn(
+            arg1: SUNNonlinearSolver,
+            arg2: SUNNonlinSolGetUpdateNormFn,
+            arg3: *mut ::std::os::raw::c_void,
+        ) -> SUNErrCode,
+    >,
+    pub setgetconvratefn: ::std::option::Option<
+        unsafe extern "C" fn(
+            arg1: SUNNonlinearSolver,
+            arg2: SUNNonlinSolGetConvRateFn,
+            arg3: *mut ::std::os::raw::c_void,
+        ) -> SUNErrCode,
+    >,
+    pub setoptions: ::std::option::Option<
+        unsafe extern "C" fn(
+            NLS: SUNNonlinearSolver,
+            NLSid: *const ::std::os::raw::c_char,
+            file_name: *const ::std::os::raw::c_char,
+            argc: ::std::os::raw::c_int,
+            argv: *mut *mut ::std::os::raw::c_char,
         ) -> SUNErrCode,
     >,
     pub setmaxiters: ::std::option::Option<
@@ -5208,7 +5901,7 @@ fn bindgen_test_layout__generic_SUNNonlinearSolver_Ops() {
     let ptr = UNINIT.as_ptr();
     assert_eq!(
         ::std::mem::size_of::<_generic_SUNNonlinearSolver_Ops>(),
-        104usize,
+        144usize,
         concat!("Size of: ", stringify!(_generic_SUNNonlinearSolver_Ops))
     );
     assert_eq!(
@@ -5277,8 +5970,18 @@ fn bindgen_test_layout__generic_SUNNonlinearSolver_Ops() {
         )
     );
     assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).setlsetupfn) as usize - ptr as usize },
+        unsafe { ::std::ptr::addr_of!((*ptr).setsysfns) as usize - ptr as usize },
         48usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_generic_SUNNonlinearSolver_Ops),
+            "::",
+            stringify!(setsysfns)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).setlsetupfn) as usize - ptr as usize },
+        56usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNNonlinearSolver_Ops),
@@ -5288,7 +5991,7 @@ fn bindgen_test_layout__generic_SUNNonlinearSolver_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).setlsolvefn) as usize - ptr as usize },
-        56usize,
+        64usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNNonlinearSolver_Ops),
@@ -5298,7 +6001,7 @@ fn bindgen_test_layout__generic_SUNNonlinearSolver_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).setctestfn) as usize - ptr as usize },
-        64usize,
+        72usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNNonlinearSolver_Ops),
@@ -5307,8 +6010,48 @@ fn bindgen_test_layout__generic_SUNNonlinearSolver_Ops() {
         )
     );
     assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).setnormfn) as usize - ptr as usize },
+        80usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_generic_SUNNonlinearSolver_Ops),
+            "::",
+            stringify!(setnormfn)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).setgetupdatenormfn) as usize - ptr as usize },
+        88usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_generic_SUNNonlinearSolver_Ops),
+            "::",
+            stringify!(setgetupdatenormfn)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).setgetconvratefn) as usize - ptr as usize },
+        96usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_generic_SUNNonlinearSolver_Ops),
+            "::",
+            stringify!(setgetconvratefn)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).setoptions) as usize - ptr as usize },
+        104usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_generic_SUNNonlinearSolver_Ops),
+            "::",
+            stringify!(setoptions)
+        )
+    );
+    assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).setmaxiters) as usize - ptr as usize },
-        72usize,
+        112usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNNonlinearSolver_Ops),
@@ -5318,7 +6061,7 @@ fn bindgen_test_layout__generic_SUNNonlinearSolver_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).getnumiters) as usize - ptr as usize },
-        80usize,
+        120usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNNonlinearSolver_Ops),
@@ -5328,7 +6071,7 @@ fn bindgen_test_layout__generic_SUNNonlinearSolver_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).getcuriter) as usize - ptr as usize },
-        88usize,
+        128usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNNonlinearSolver_Ops),
@@ -5338,7 +6081,7 @@ fn bindgen_test_layout__generic_SUNNonlinearSolver_Ops() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).getnumconvfails) as usize - ptr as usize },
-        96usize,
+        136usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNNonlinearSolver_Ops),
@@ -5351,6 +6094,7 @@ fn bindgen_test_layout__generic_SUNNonlinearSolver_Ops() {
 #[derive(Debug, Copy, Clone)]
 pub struct _generic_SUNNonlinearSolver {
     pub content: *mut ::std::os::raw::c_void,
+    pub python: *mut ::std::os::raw::c_void,
     pub ops: SUNNonlinearSolver_Ops,
     pub sunctx: SUNContext,
 }
@@ -5361,7 +6105,7 @@ fn bindgen_test_layout__generic_SUNNonlinearSolver() {
     let ptr = UNINIT.as_ptr();
     assert_eq!(
         ::std::mem::size_of::<_generic_SUNNonlinearSolver>(),
-        24usize,
+        32usize,
         concat!("Size of: ", stringify!(_generic_SUNNonlinearSolver))
     );
     assert_eq!(
@@ -5380,8 +6124,18 @@ fn bindgen_test_layout__generic_SUNNonlinearSolver() {
         )
     );
     assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).ops) as usize - ptr as usize },
+        unsafe { ::std::ptr::addr_of!((*ptr).python) as usize - ptr as usize },
         8usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(_generic_SUNNonlinearSolver),
+            "::",
+            stringify!(python)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).ops) as usize - ptr as usize },
+        16usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNNonlinearSolver),
@@ -5391,7 +6145,7 @@ fn bindgen_test_layout__generic_SUNNonlinearSolver() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).sunctx) as usize - ptr as usize },
-        16usize,
+        24usize,
         concat!(
             "Offset of field: ",
             stringify!(_generic_SUNNonlinearSolver),
@@ -5446,6 +6200,13 @@ extern "C" {
     pub fn SUNNonlinSolSetSysFn(NLS: SUNNonlinearSolver, SysFn: SUNNonlinSolSysFn) -> SUNErrCode;
 }
 extern "C" {
+    pub fn SUNNonlinSolSetSysFns(
+        NLS: SUNNonlinearSolver,
+        root_fn: SUNNonlinSolSysFn,
+        fixed_point_fn: SUNNonlinSolSysFn,
+    ) -> SUNErrCode;
+}
+extern "C" {
     pub fn SUNNonlinSolSetLSetupFn(
         NLS: SUNNonlinearSolver,
         SetupFn: SUNNonlinSolLSetupFn,
@@ -5462,6 +6223,36 @@ extern "C" {
         NLS: SUNNonlinearSolver,
         CTestFn: SUNNonlinSolConvTestFn,
         ctest_data: *mut ::std::os::raw::c_void,
+    ) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNNonlinSolSetNormFn(
+        NLS: SUNNonlinearSolver,
+        NormFn: SUNNonlinSolNormFn,
+        norm_fn_data: *mut ::std::os::raw::c_void,
+    ) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNNonlinSolSetGetUpdateNormFn(
+        NLS: SUNNonlinearSolver,
+        GetUpdateNormFn: SUNNonlinSolGetUpdateNormFn,
+        getupdatenorm_data: *mut ::std::os::raw::c_void,
+    ) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNNonlinSolSetGetConvRateFn(
+        NLS: SUNNonlinearSolver,
+        GetConvRateFn: SUNNonlinSolGetConvRateFn,
+        getconvrate_data: *mut ::std::os::raw::c_void,
+    ) -> SUNErrCode;
+}
+extern "C" {
+    pub fn SUNNonlinSolSetOptions(
+        NLS: SUNNonlinearSolver,
+        NLSid: *const ::std::os::raw::c_char,
+        file_name: *const ::std::os::raw::c_char,
+        argc: ::std::os::raw::c_int,
+        argv: *mut *mut ::std::os::raw::c_char,
     ) -> SUNErrCode;
 }
 extern "C" {
@@ -6063,7 +6854,7 @@ pub type CVLsJacFnBS = ::std::option::Option<
     unsafe extern "C" fn(
         t: sunrealtype,
         y: N_Vector,
-        yS: *mut N_Vector,
+        yS_1d: *mut N_Vector,
         yB: N_Vector,
         fyB: N_Vector,
         JB: SUNMatrix,
@@ -6089,7 +6880,7 @@ pub type CVLsPrecSetupFnBS = ::std::option::Option<
     unsafe extern "C" fn(
         t: sunrealtype,
         y: N_Vector,
-        yS: *mut N_Vector,
+        yS_1d: *mut N_Vector,
         yB: N_Vector,
         fyB: N_Vector,
         jokB: ::std::os::raw::c_int,
@@ -6116,7 +6907,7 @@ pub type CVLsPrecSolveFnBS = ::std::option::Option<
     unsafe extern "C" fn(
         t: sunrealtype,
         y: N_Vector,
-        yS: *mut N_Vector,
+        yS_1d: *mut N_Vector,
         yB: N_Vector,
         fyB: N_Vector,
         rB: N_Vector,
@@ -6133,17 +6924,17 @@ pub type CVLsJacTimesSetupFnB = ::std::option::Option<
         y: N_Vector,
         yB: N_Vector,
         fyB: N_Vector,
-        jac_dataB: *mut ::std::os::raw::c_void,
+        user_dataB: *mut ::std::os::raw::c_void,
     ) -> ::std::os::raw::c_int,
 >;
 pub type CVLsJacTimesSetupFnBS = ::std::option::Option<
     unsafe extern "C" fn(
         t: sunrealtype,
         y: N_Vector,
-        yS: *mut N_Vector,
+        yS_1d: *mut N_Vector,
         yB: N_Vector,
         fyB: N_Vector,
-        jac_dataB: *mut ::std::os::raw::c_void,
+        user_dataB: *mut ::std::os::raw::c_void,
     ) -> ::std::os::raw::c_int,
 >;
 pub type CVLsJacTimesVecFnB = ::std::option::Option<
@@ -6154,7 +6945,7 @@ pub type CVLsJacTimesVecFnB = ::std::option::Option<
         y: N_Vector,
         yB: N_Vector,
         fyB: N_Vector,
-        jac_dataB: *mut ::std::os::raw::c_void,
+        user_dataB: *mut ::std::os::raw::c_void,
         tmpB: N_Vector,
     ) -> ::std::os::raw::c_int,
 >;
@@ -6164,10 +6955,10 @@ pub type CVLsJacTimesVecFnBS = ::std::option::Option<
         JvB: N_Vector,
         t: sunrealtype,
         y: N_Vector,
-        yS: *mut N_Vector,
+        yS_1d: *mut N_Vector,
         yB: N_Vector,
         fyB: N_Vector,
-        jac_dataB: *mut ::std::os::raw::c_void,
+        user_dataB: *mut ::std::os::raw::c_void,
         tmpB: N_Vector,
     ) -> ::std::os::raw::c_int,
 >;
@@ -6191,7 +6982,7 @@ pub type CVLsLinSysFnBS = ::std::option::Option<
     unsafe extern "C" fn(
         t: sunrealtype,
         y: N_Vector,
-        yS: *mut N_Vector,
+        yS_1d: *mut N_Vector,
         yB: N_Vector,
         fyB: N_Vector,
         AB: SUNMatrix,
@@ -6307,8 +7098,8 @@ pub type CVSensRhsFn = ::std::option::Option<
         t: sunrealtype,
         y: N_Vector,
         ydot: N_Vector,
-        yS: *mut N_Vector,
-        ySdot: *mut N_Vector,
+        yS_1d: *mut N_Vector,
+        ySdot_1d: *mut N_Vector,
         user_data: *mut ::std::os::raw::c_void,
         tmp1: N_Vector,
         tmp2: N_Vector,
@@ -6333,9 +7124,9 @@ pub type CVQuadSensRhsFn = ::std::option::Option<
         Ns: ::std::os::raw::c_int,
         t: sunrealtype,
         y: N_Vector,
-        yS: *mut N_Vector,
+        yS_1d: *mut N_Vector,
         yQdot: N_Vector,
-        yQSdot: *mut N_Vector,
+        yQSdot_1d: *mut N_Vector,
         user_data: *mut ::std::os::raw::c_void,
         tmp: N_Vector,
         tmpQ: N_Vector,
@@ -6354,7 +7145,7 @@ pub type CVRhsFnBS = ::std::option::Option<
     unsafe extern "C" fn(
         t: sunrealtype,
         y: N_Vector,
-        yS: *mut N_Vector,
+        yS_1d: *mut N_Vector,
         yB: N_Vector,
         yBdot: N_Vector,
         user_dataB: *mut ::std::os::raw::c_void,
@@ -6373,17 +7164,32 @@ pub type CVQuadRhsFnBS = ::std::option::Option<
     unsafe extern "C" fn(
         t: sunrealtype,
         y: N_Vector,
-        yS: *mut N_Vector,
+        yS_1d: *mut N_Vector,
         yB: N_Vector,
         qBdot: N_Vector,
         user_dataB: *mut ::std::os::raw::c_void,
     ) -> ::std::os::raw::c_int,
 >;
 extern "C" {
+    pub fn CVodeSetOptions(
+        cvode_mem: *mut ::std::os::raw::c_void,
+        cvid: *const ::std::os::raw::c_char,
+        file_name: *const ::std::os::raw::c_char,
+        argc: ::std::os::raw::c_int,
+        argv: *mut *mut ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn CVodeSetMaxNumConstraintFails(
+        cvode_mem: *mut ::std::os::raw::c_void,
+        max_fails: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
     pub fn CVodeComputeStateSens(
         cvode_mem: *mut ::std::os::raw::c_void,
-        yScor: *mut N_Vector,
-        yS: *mut N_Vector,
+        yScor_1d: *mut N_Vector,
+        yS_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -6397,7 +7203,7 @@ extern "C" {
 extern "C" {
     pub fn CVodeGetCurrentStateSens(
         cvode_mem: *mut ::std::os::raw::c_void,
-        yS: *mut *mut N_Vector,
+        yS_1d_out: *mut *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -6410,12 +7216,24 @@ extern "C" {
     pub fn CVodeGetNonlinearSystemDataSens(
         cvode_mem: *mut ::std::os::raw::c_void,
         tcur: *mut sunrealtype,
-        ySpred: *mut *mut N_Vector,
-        ySn: *mut *mut N_Vector,
+        ySpred_1d_out: *mut *mut N_Vector,
+        ySn_1d_out: *mut *mut N_Vector,
         gamma: *mut sunrealtype,
         rl1: *mut sunrealtype,
-        zn1: *mut *mut N_Vector,
+        zn1_1d_out: *mut *mut N_Vector,
         user_data: *mut *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn CVodeGetNumConstraintFails(
+        cvode_mem: *mut ::std::os::raw::c_void,
+        num_fails_out: *mut ::std::os::raw::c_long,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn CVodeGetNumConstraintCorrections(
+        cvode_mem: *mut ::std::os::raw::c_void,
+        num_corrections_out: *mut ::std::os::raw::c_long,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -6500,7 +7318,7 @@ extern "C" {
         Ns: ::std::os::raw::c_int,
         ism: ::std::os::raw::c_int,
         fS: CVSensRhsFn,
-        yS0: *mut N_Vector,
+        yS0_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -6509,28 +7327,28 @@ extern "C" {
         Ns: ::std::os::raw::c_int,
         ism: ::std::os::raw::c_int,
         fS1: CVSensRhs1Fn,
-        yS0: *mut N_Vector,
+        yS0_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn CVodeSensReInit(
         cvode_mem: *mut ::std::os::raw::c_void,
         ism: ::std::os::raw::c_int,
-        yS0: *mut N_Vector,
+        yS0_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn CVodeSensSStolerances(
         cvode_mem: *mut ::std::os::raw::c_void,
         reltolS: sunrealtype,
-        abstolS: *mut sunrealtype,
+        abstolS_1d: *mut sunrealtype,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn CVodeSensSVtolerances(
         cvode_mem: *mut ::std::os::raw::c_void,
         reltolS: sunrealtype,
-        abstolS: *mut N_Vector,
+        abstolS_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -6558,9 +7376,9 @@ extern "C" {
 extern "C" {
     pub fn CVodeSetSensParams(
         cvode_mem: *mut ::std::os::raw::c_void,
-        p: *mut sunrealtype,
-        pbar: *mut sunrealtype,
-        plist: *mut ::std::os::raw::c_int,
+        p_1d: *mut sunrealtype,
+        pbar_1d: *mut sunrealtype,
+        plist_1d: *mut ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -6588,7 +7406,7 @@ extern "C" {
     pub fn CVodeGetSens(
         cvode_mem: *mut ::std::os::raw::c_void,
         tret: *mut sunrealtype,
-        ySout: *mut N_Vector,
+        ySout_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -6604,7 +7422,7 @@ extern "C" {
         cvode_mem: *mut ::std::os::raw::c_void,
         t: sunrealtype,
         k: ::std::os::raw::c_int,
-        dkyA: *mut N_Vector,
+        dkyA_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -6643,7 +7461,7 @@ extern "C" {
 extern "C" {
     pub fn CVodeGetSensErrWeights(
         cvode_mem: *mut ::std::os::raw::c_void,
-        eSweight: *mut N_Vector,
+        eSweight_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -6683,26 +7501,26 @@ extern "C" {
 extern "C" {
     pub fn CVodeGetStgrSensNumNonlinSolvIters(
         cvode_mem: *mut ::std::os::raw::c_void,
-        nSTGR1niters: *mut ::std::os::raw::c_long,
+        nSTGR1niters_1d: *mut ::std::os::raw::c_long,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn CVodeGetStgrSensNumNonlinSolvConvFails(
         cvode_mem: *mut ::std::os::raw::c_void,
-        nSTGR1nfails: *mut ::std::os::raw::c_long,
+        nSTGR1nfails_1d: *mut ::std::os::raw::c_long,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn CVodeGetStgrSensNonlinSolvStats(
         cvode_mem: *mut ::std::os::raw::c_void,
-        nSTGR1niters: *mut ::std::os::raw::c_long,
-        nSTGR1nfails: *mut ::std::os::raw::c_long,
+        nSTGR1niters_1d: *mut ::std::os::raw::c_long,
+        nSTGR1nfails_1d: *mut ::std::os::raw::c_long,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn CVodeGetNumStepStgrSensSolveFails(
         cvode_mem: *mut ::std::os::raw::c_void,
-        nSTGR1ncfails: *mut ::std::os::raw::c_long,
+        nSTGR1ncfails_1d: *mut ::std::os::raw::c_long,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -6712,27 +7530,27 @@ extern "C" {
     pub fn CVodeQuadSensInit(
         cvode_mem: *mut ::std::os::raw::c_void,
         fQS: CVQuadSensRhsFn,
-        yQS0: *mut N_Vector,
+        yQS0_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn CVodeQuadSensReInit(
         cvode_mem: *mut ::std::os::raw::c_void,
-        yQS0: *mut N_Vector,
+        yQS0_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn CVodeQuadSensSStolerances(
         cvode_mem: *mut ::std::os::raw::c_void,
         reltolQS: sunrealtype,
-        abstolQS: *mut sunrealtype,
+        abstolQS_1d: *mut sunrealtype,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn CVodeQuadSensSVtolerances(
         cvode_mem: *mut ::std::os::raw::c_void,
         reltolQS: sunrealtype,
-        abstolQS: *mut N_Vector,
+        abstolQS_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -6750,7 +7568,7 @@ extern "C" {
     pub fn CVodeGetQuadSens(
         cvode_mem: *mut ::std::os::raw::c_void,
         tret: *mut sunrealtype,
-        yQSout: *mut N_Vector,
+        yQSout_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -6766,7 +7584,7 @@ extern "C" {
         cvode_mem: *mut ::std::os::raw::c_void,
         t: sunrealtype,
         k: ::std::os::raw::c_int,
-        dkyQS_all: *mut N_Vector,
+        dkyQS_all_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -6793,7 +7611,7 @@ extern "C" {
 extern "C" {
     pub fn CVodeGetQuadSensErrWeights(
         cvode_mem: *mut ::std::os::raw::c_void,
-        eQSweight: *mut N_Vector,
+        eQSweight_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -7011,6 +7829,13 @@ extern "C" {
         which: ::std::os::raw::c_int,
         tBret: *mut sunrealtype,
         qB: N_Vector,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn CVodeGetUserDataB(
+        cvode_mem: *mut ::std::os::raw::c_void,
+        which: ::std::os::raw::c_int,
+        user_dataB: *mut *mut ::std::os::raw::c_void,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -7897,8 +8722,8 @@ pub type IDALsJacFnBS = ::std::option::Option<
         c_jB: sunrealtype,
         yy: N_Vector,
         yp: N_Vector,
-        yS: *mut N_Vector,
-        ypS: *mut N_Vector,
+        yS_1d: *mut N_Vector,
+        ypS_1d: *mut N_Vector,
         yyB: N_Vector,
         ypB: N_Vector,
         rrB: N_Vector,
@@ -7926,8 +8751,8 @@ pub type IDALsPrecSetupFnBS = ::std::option::Option<
         tt: sunrealtype,
         yy: N_Vector,
         yp: N_Vector,
-        yyS: *mut N_Vector,
-        ypS: *mut N_Vector,
+        yyS_1d: *mut N_Vector,
+        ypS_1d: *mut N_Vector,
         yyB: N_Vector,
         ypB: N_Vector,
         rrB: N_Vector,
@@ -7955,8 +8780,8 @@ pub type IDALsPrecSolveFnBS = ::std::option::Option<
         tt: sunrealtype,
         yy: N_Vector,
         yp: N_Vector,
-        yyS: *mut N_Vector,
-        ypS: *mut N_Vector,
+        yyS_1d: *mut N_Vector,
+        ypS_1d: *mut N_Vector,
         yyB: N_Vector,
         ypB: N_Vector,
         rrB: N_Vector,
@@ -7984,8 +8809,8 @@ pub type IDALsJacTimesSetupFnBS = ::std::option::Option<
         t: sunrealtype,
         yy: N_Vector,
         yp: N_Vector,
-        yyS: *mut N_Vector,
-        ypS: *mut N_Vector,
+        yyS_1d: *mut N_Vector,
+        ypS_1d: *mut N_Vector,
         yyB: N_Vector,
         ypB: N_Vector,
         rrB: N_Vector,
@@ -8014,8 +8839,8 @@ pub type IDALsJacTimesVecFnBS = ::std::option::Option<
         t: sunrealtype,
         yy: N_Vector,
         yp: N_Vector,
-        yyS: *mut N_Vector,
-        ypS: *mut N_Vector,
+        yyS_1d: *mut N_Vector,
+        ypS_1d: *mut N_Vector,
         yyB: N_Vector,
         ypB: N_Vector,
         rrB: N_Vector,
@@ -8125,9 +8950,9 @@ pub type IDASensResFn = ::std::option::Option<
         yy: N_Vector,
         yp: N_Vector,
         resval: N_Vector,
-        yyS: *mut N_Vector,
-        ypS: *mut N_Vector,
-        resvalS: *mut N_Vector,
+        yyS_1d: *mut N_Vector,
+        ypS_1d: *mut N_Vector,
+        resvalS_1d: *mut N_Vector,
         user_data: *mut ::std::os::raw::c_void,
         tmp1: N_Vector,
         tmp2: N_Vector,
@@ -8140,10 +8965,10 @@ pub type IDAQuadSensRhsFn = ::std::option::Option<
         t: sunrealtype,
         yy: N_Vector,
         yp: N_Vector,
-        yyS: *mut N_Vector,
-        ypS: *mut N_Vector,
+        yyS_1d: *mut N_Vector,
+        ypS_1d: *mut N_Vector,
         rrQ: N_Vector,
-        rhsvalQS: *mut N_Vector,
+        rhsvalQS_1d: *mut N_Vector,
         user_data: *mut ::std::os::raw::c_void,
         yytmp: N_Vector,
         yptmp: N_Vector,
@@ -8166,8 +8991,8 @@ pub type IDAResFnBS = ::std::option::Option<
         t: sunrealtype,
         yy: N_Vector,
         yp: N_Vector,
-        yyS: *mut N_Vector,
-        ypS: *mut N_Vector,
+        yyS_1d: *mut N_Vector,
+        ypS_1d: *mut N_Vector,
         yyB: N_Vector,
         ypB: N_Vector,
         rrBS: N_Vector,
@@ -8190,8 +9015,8 @@ pub type IDAQuadRhsFnBS = ::std::option::Option<
         t: sunrealtype,
         yy: N_Vector,
         yp: N_Vector,
-        yyS: *mut N_Vector,
-        ypS: *mut N_Vector,
+        yyS_1d: *mut N_Vector,
+        ypS_1d: *mut N_Vector,
         yyB: N_Vector,
         ypB: N_Vector,
         rhsvalBQS: N_Vector,
@@ -8199,39 +9024,66 @@ pub type IDAQuadRhsFnBS = ::std::option::Option<
     ) -> ::std::os::raw::c_int,
 >;
 extern "C" {
+    pub fn IDASetOptions(
+        ida_mem: *mut ::std::os::raw::c_void,
+        idaid: *const ::std::os::raw::c_char,
+        file_name: *const ::std::os::raw::c_char,
+        argc: ::std::os::raw::c_int,
+        argv: *mut *mut ::std::os::raw::c_char,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn IDASetMaxNumConstraintFails(
+        ida_mem: *mut ::std::os::raw::c_void,
+        max_fails: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
     pub fn IDAComputeYSens(
         ida_mem: *mut ::std::os::raw::c_void,
-        ycor: *mut N_Vector,
-        yyS: *mut N_Vector,
+        ycor_1d: *mut N_Vector,
+        yyS_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn IDAComputeYpSens(
         ida_mem: *mut ::std::os::raw::c_void,
-        ycor: *mut N_Vector,
-        ypS: *mut N_Vector,
+        ycor_1d: *mut N_Vector,
+        ypS_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn IDAGetCurrentYSens(
         ida_mem: *mut ::std::os::raw::c_void,
-        yS: *mut *mut N_Vector,
+        yS_1d_out: *mut *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn IDAGetCurrentYpSens(
         ida_mem: *mut ::std::os::raw::c_void,
-        ypS: *mut *mut N_Vector,
+        ypS_1d_out: *mut *mut N_Vector,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn IDAGetNumConstraintFails(
+        ida_mem: *mut ::std::os::raw::c_void,
+        num_fails_out: *mut ::std::os::raw::c_long,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn IDAGetNumConstraintCorrections(
+        ida_mem: *mut ::std::os::raw::c_void,
+        num_corrections_out: *mut ::std::os::raw::c_long,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn IDAGetNonlinearSystemDataSens(
         ida_mem: *mut ::std::os::raw::c_void,
         tcur: *mut sunrealtype,
-        yySpred: *mut *mut N_Vector,
-        ypSpred: *mut *mut N_Vector,
-        yySn: *mut *mut N_Vector,
-        ypSn: *mut *mut N_Vector,
+        yySpred_1d_out: *mut *mut N_Vector,
+        ypSpred_1d_out: *mut *mut N_Vector,
+        yySn_1d_out: *mut *mut N_Vector,
+        ypSn_1d_out: *mut *mut N_Vector,
         cj: *mut sunrealtype,
         user_data: *mut *mut ::std::os::raw::c_void,
     ) -> ::std::os::raw::c_int;
@@ -8318,30 +9170,30 @@ extern "C" {
         Ns: ::std::os::raw::c_int,
         ism: ::std::os::raw::c_int,
         resS: IDASensResFn,
-        yS0: *mut N_Vector,
-        ypS0: *mut N_Vector,
+        yS0_1d: *mut N_Vector,
+        ypS0_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn IDASensReInit(
         ida_mem: *mut ::std::os::raw::c_void,
         ism: ::std::os::raw::c_int,
-        yS0: *mut N_Vector,
-        ypS0: *mut N_Vector,
+        yS0_1d: *mut N_Vector,
+        ypS0_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn IDASensSStolerances(
         ida_mem: *mut ::std::os::raw::c_void,
         reltolS: sunrealtype,
-        abstolS: *mut sunrealtype,
+        abstolS_1d: *mut sunrealtype,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn IDASensSVtolerances(
         ida_mem: *mut ::std::os::raw::c_void,
         reltolS: sunrealtype,
-        abstolS: *mut N_Vector,
+        abstolS_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -8350,8 +9202,8 @@ extern "C" {
 extern "C" {
     pub fn IDAGetSensConsistentIC(
         ida_mem: *mut ::std::os::raw::c_void,
-        yyS0: *mut N_Vector,
-        ypS0: *mut N_Vector,
+        yyS0_1d: *mut N_Vector,
+        ypS0_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -8376,9 +9228,9 @@ extern "C" {
 extern "C" {
     pub fn IDASetSensParams(
         ida_mem: *mut ::std::os::raw::c_void,
-        p: *mut sunrealtype,
-        pbar: *mut sunrealtype,
-        plist: *mut ::std::os::raw::c_int,
+        p_1d: *mut sunrealtype,
+        pbar_1d: *mut sunrealtype,
+        plist_1d: *mut ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -8400,7 +9252,7 @@ extern "C" {
     pub fn IDAGetSens(
         ida_mem: *mut ::std::os::raw::c_void,
         tret: *mut sunrealtype,
-        yySout: *mut N_Vector,
+        yySout_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -8416,7 +9268,7 @@ extern "C" {
         ida_mem: *mut ::std::os::raw::c_void,
         t: sunrealtype,
         k: ::std::os::raw::c_int,
-        dkyS: *mut N_Vector,
+        dkyS_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -8455,7 +9307,7 @@ extern "C" {
 extern "C" {
     pub fn IDAGetSensErrWeights(
         ida_mem: *mut ::std::os::raw::c_void,
-        eSweight: N_Vector_S,
+        eSweight_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -8499,27 +9351,27 @@ extern "C" {
     pub fn IDAQuadSensInit(
         ida_mem: *mut ::std::os::raw::c_void,
         resQS: IDAQuadSensRhsFn,
-        yQS0: *mut N_Vector,
+        yQS0_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn IDAQuadSensReInit(
         ida_mem: *mut ::std::os::raw::c_void,
-        yQS0: *mut N_Vector,
+        yQS0_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn IDAQuadSensSStolerances(
         ida_mem: *mut ::std::os::raw::c_void,
         reltolQS: sunrealtype,
-        abstolQS: *mut sunrealtype,
+        abstolQS_1d: *mut sunrealtype,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn IDAQuadSensSVtolerances(
         ida_mem: *mut ::std::os::raw::c_void,
         reltolQS: sunrealtype,
-        abstolQS: *mut N_Vector,
+        abstolQS_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -8535,7 +9387,7 @@ extern "C" {
     pub fn IDAGetQuadSens(
         ida_mem: *mut ::std::os::raw::c_void,
         tret: *mut sunrealtype,
-        yyQSout: *mut N_Vector,
+        yyQSout_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -8551,7 +9403,7 @@ extern "C" {
         ida_mem: *mut ::std::os::raw::c_void,
         t: sunrealtype,
         k: ::std::os::raw::c_int,
-        dkyQS: *mut N_Vector,
+        dkyQS_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -8578,7 +9430,7 @@ extern "C" {
 extern "C" {
     pub fn IDAGetQuadSensErrWeights(
         ida_mem: *mut ::std::os::raw::c_void,
-        eQSweight: *mut N_Vector,
+        eQSweight_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -8710,8 +9562,8 @@ extern "C" {
         tout1: sunrealtype,
         yy0: N_Vector,
         yp0: N_Vector,
-        yyS0: *mut N_Vector,
-        ypS0: *mut N_Vector,
+        yyS0_1d: *mut N_Vector,
+        ypS0_1d: *mut N_Vector,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
@@ -8820,6 +9672,13 @@ extern "C" {
         which: ::std::os::raw::c_int,
         tret: *mut sunrealtype,
         qB: N_Vector,
+    ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn IDAGetUserDataB(
+        ida_mem: *mut ::std::os::raw::c_void,
+        which: ::std::os::raw::c_int,
+        user_data: *mut *mut ::std::os::raw::c_void,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
